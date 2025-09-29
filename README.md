@@ -8,7 +8,9 @@
 AWS의 비용 관리(FinOps) 기능과 여러 서비스를 조합하여,
 예상치 못한 비용 급등을 조기에 발견하고 대응할 수 있도록 설계되었습니다.
 
-### 주요 목표
+---
+
+## 🎯 주요 목표
 
 * AWS **비용 이상 이벤트** 자동 감지 및 모니터링
 * **Lambda**를 통한 이벤트 처리 및 알림 요약
@@ -22,45 +24,46 @@ AWS의 비용 관리(FinOps) 기능과 여러 서비스를 조합하여,
 
 아래 아키텍처는 **비용 이상 탐지 → Slack 알림/승인 → 자동 완화**까지의 전체 흐름을 보여줍니다.
 
-```mermaid
-flowchart TD
-    CAD[AWS Cost Anomaly Detection] --> EB[Amazon EventBridge]
-    EB --> R[Router Lambda]
-    R --> S3[(S3: 로그 저장)]
-    R --> B[Amazon Bedrock]
-    R --> SB[Slack Bot 알림]
-    SB --> U[관리자 (승인/유지 버튼)]
-
-    U -->|승인| API[API Gateway]
-    API --> H[Slack Interaction Handler Lambda]
-    H --> W[Worker Lambda]
-    W --> SSM[AWS SSM Automation]
-    SSM --> EC2[EC2 Instance Stop]
-    W --> SU[Slack 메시지 업데이트]
-```
+![architecture](./f74027e4-bf19-4f04-8079-98f585830329.png)
 
 ---
+## ⚙️ 동작 흐름 (조건 분기 중심)
 
-## ⚙️ 동작 흐름
+### 1. 이벤트 수신 및 로그 저장
+* 모든 이상 탐지 이벤트는 **Router Lambda**에서 수신
+* 이벤트 원본은 항상 **S3에 저장** → 추후 분석/추적 가능
 
-1. **CAD**: 계정 내 비용 이상 징후 감지 → EventBridge로 이벤트 송신
-2. **Router Lambda**
+### 2. 기본 요약 알림 (impact 조건)
+* 이벤트의 `impact` 값이 **$1 이상**일 경우
+  * **Amazon Bedrock**으로 요약 생성
+  * Slack으로 **자연어 요약 알림 전송**
+* `$1 미만`일 경우
+  * 요약 알림은 생략 (**로그만 남음**)
 
-   * 이벤트 로그 S3 저장
-   * Bedrock 호출 → 한국어 요약 생성
-   * Slack Bot으로 알림 전송 (승인 버튼 포함)
-   * EC2 Root Cause 리소스 검증 및 `Quarantine` 태그 부여
-3. **관리자**: Slack에서 버튼 클릭 (✅ 중지 승인 / 🚫 유지)
-4. **API Gateway + Handler Lambda**: Slack 이벤트 수신, Worker Lambda 호출
-5. **Worker Lambda**
+### 3. EC2 RootCause 분기
+* 이벤트의 RootCause에 **EC2 리소스**가 포함된 경우:
+  1. 해당 인스턴스에 `autoterminate=true` 태그가 있는지 탐색
+  2. 조건이 맞으면:
+     * **Quarantine=true 태그를 자동 추가**
+     * Bedrock 요약 결과를 Slack 메시지 상단에 표시
+     * 이어서 **승인/유지 버튼** 포함된 블록 추가
+     * 최종적으로 **요약 + 버튼이 합쳐진 Slack 알림** 전송
+* RootCause가 EC2가 아니거나, 태그 조건이 맞지 않는 경우:
+  * **버튼 알림은 생성되지 않음**
+  * (단, impact ≥ $1이면 기본 요약 알림은 전송됨)
 
-   * 승인 시 → **SSM Automation (AWS-StopEC2Instance)** 실행
-   * 유지 시 → 기록만 남김
-   * 처리 결과로 Slack 메시지 업데이트
+### 4. Slack 상호작용
+* 관리자가 Slack에서 버튼 선택:
+  * ✅ **중지 승인** → Worker Lambda → **SSM Automation 실행 (AWS-StopEC2Instance)**
+  * 🚫 **유지** → 아무 조치 없이 메시지 업데이트
 
+### 5. Slack 메시지 업데이트
+* Worker Lambda가 처리 결과를 Slack 메시지에 반영:
+  * 승인 시: `"✅ 인스턴스 중지 명령 전송 완료"`
+  * 유지 시: `"ℹ️ 인스턴스 유지 결정"`
 ---
 
-## 🧩 주요 기술 스택
+## 🧩 주요 사용 서비스
 
 * **AWS Cost Anomaly Detection** – 비용 이상 탐지
 * **Amazon EventBridge** – 이상 이벤트 라우팅
@@ -81,12 +84,35 @@ flowchart TD
 
 ---
 
-## 🙋 본인 기여 포인트
+## 🙋 주요 구현 내용
 
-* 비용 이상 탐지 파트 아키텍처 설계 및 구현 담당
-* Router Lambda, Slack Bot, Bedrock 요약 연동 직접 구현
-* Slack Interactive Button + API Gateway + Worker Lambda 설계/구현
-* SSM 기반 EC2 자동 중지 프로세스 시뮬레이션 및 검증
+* 비용 이상 탐지 파이프라인 전체 설계 및 개발
+* Router Lambda, Slack Bot, Bedrock 요약 통합
+* Slack Interactive Button → API Gateway → Worker Lambda 상호작용 처리
+* EC2 자동 중지를 위한 SSM Automation 연계 및 검증
+
+---
+
+## 📌 프로젝트 의의 및 향후 과제
+
+### 의의
+* AWS **비용 이상 탐지 이벤트**를 자동으로 수집하고, 로그로 축적하여 추후 분석 가능
+* **Slack 알림**을 통해 운영자가 실시간으로 비용 이상을 인지할 수 있도록 지원
+* 운영자의 최종 승인을 거쳐 **불필요한 비용을 줄이는 자동화된 대응 구조** 구현
+
+### PoC 한계점 (의도적 단순화)
+* **PoC 성격**의 프로젝트이므로 빠른 검증을 위해 `$1` 임팩트 기준으로 알림 조건을 단순화
+* 자동화 조치 시나리오는 **EC2 인스턴스 중지**에만 국한하여 구현  
+  (구체적인 예시 1개를 빠르게 완성해 시나리오를 보여주는 목적)
+
+### 향후 과제
+* Bedrock 요약 모델을 **FinOps 도메인 특화 데이터**로 추가 학습/튜닝하여 알림 품질 개선
+* 현재는 **EC2 리소스 중지**만 다루고 있으므로,  
+  추후에는 RDS, EKS, Lambda, DynamoDB 등 **다양한 비용 발생 리소스까지 확장**하는 구조 필요
+* `autoterminate=true` 태그를 수동으로 설정하는 대신,  
+  **거버넌스/상위 정책과 연계하여 자동 태깅**할 수 있는 체계로 확장  
+  → 예: 리소스 생성 시점에 정책 기반으로 “중지해도 무방한 리소스” 자동 식별 및 태깅
+* 승인 프로세스를 Slack 외 다른 **협업 툴(Jira, Teams 등)**과 연동하여 활용성 강화 가능
 
 ---
 
@@ -97,6 +123,13 @@ flowchart TD
 
 ---
 
-✅ 이번 버전은 전부 마크다운 문법만 사용했으니, GitHub `README.md`에 그대로 복붙하셔도 깨지지 않고 잘 보입니다.
 
-혹시 이 README를 **짧게 압축한 PDF 제출용 요약본(2~3쪽)**도 만들어드릴까요?
+
+
+
+
+
+
+
+
+
