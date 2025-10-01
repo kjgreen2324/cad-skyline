@@ -1,0 +1,58 @@
+{
+  "RoleName": "cost-anomaly-router-role-pkj",
+  "AssumeRolePolicyDocument": {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Principal": { "Service": "lambda.amazonaws.com" },
+        "Action": "sts:AssumeRole"
+      }
+    ]
+  },
+  "AttachedManagedPolicies": [
+    "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+  ],
+  "InlinePolicies": {
+    "AllowS3PutObject-pkj": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "s3:PutObject",
+          "Resource": "arn:aws:s3:::cost-anomaly-logs-pkj/*"
+        }
+      ]
+    },
+    "AllowBedrockInvokeModel-pkj": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "bedrock:InvokeModel",
+          "Resource": "arn:aws:bedrock:<region>::foundation-model/amazon.titan-text-express-v1"
+        }
+      ]
+    },
+    "AllowEC2CreateTags-pkj": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "ec2:CreateTags",
+          "Resource": "arn:aws:ec2:<region>:<account-id>:instance/*"
+        }
+      ]
+    },
+    "AllowEC2DescribeInstances-pkj": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "ec2:DescribeInstances",
+          "Resource": "*"
+        }
+      ]
+    }
+  }
+}

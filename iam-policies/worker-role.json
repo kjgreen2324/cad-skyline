@@ -1,0 +1,43 @@
+{
+  "RoleName": "cost-anomaly-worker-role-pkj",
+  "AssumeRolePolicyDocument": {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Principal": { "Service": "lambda.amazonaws.com" },
+        "Action": "sts:AssumeRole"
+      }
+    ]
+  },
+  "AttachedManagedPolicies": [
+    "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+  ],
+  "InlinePolicies": {
+    "AllowEC2StopInstances-pkj": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Sid": "AllowStopInstances",
+          "Effect": "Allow",
+          "Action": [
+            "ec2:StopInstances",
+            "ec2:DescribeInstances"
+          ],
+          "Resource": "arn:aws:ec2:<region>:<account-id>:instance/*"
+        }
+      ]
+    },
+    "AllowSSMAutomation-pkj": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Sid": "AllowStartAutomation",
+          "Effect": "Allow",
+          "Action": "ssm:StartAutomationExecution",
+          "Resource": "arn:aws:ssm:<region>::automation-definition/AWS-StopEC2Instance:$DEFAULT"
+        }
+      ]
+    }
+  }
+}

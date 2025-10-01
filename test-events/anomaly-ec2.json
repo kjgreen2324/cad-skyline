@@ -1,0 +1,38 @@
+{
+  "version": "0",
+  "id": "b68cda85-976f-9602-0719-af1cc4dfaba4",
+  "detail-type": "Anomaly Detected",
+  "source": "my.test.source",
+  "account": "646558765106",
+  "time": "2025-09-27T18:56:46Z",
+  "region": "ap-northeast-1",
+  "resources": [],
+  "detail": {
+    "version": "0",
+    "id": "test-event-004",
+    "detail-type": "Anomaly Detected",
+    "source": "my.test.source",
+    "account": "123456789012",
+    "time": "2025-09-28T04:00:00Z",
+    "region": "ap-northeast-2",
+    "resources": [],
+    "detail": {
+      "anomalyId": "anomaly-test-004",
+      "anomalyStartDate": "2025-09-27T00:00:00Z",
+      "anomalyEndDate": "2025-09-27T23:59:59Z",
+      "anomalyScore": {
+        "currentScore": 9.3
+      },
+      "impact": {
+        "maxImpact": 18.4,
+        "unit": "USD"
+      },
+      "rootCauses": [{
+        "service": "AmazonEC2",
+        "region": "ap-northeast-1",
+        "linkedAccount": "646558765106",
+        "usageType": "BoxUsage:t3.micro"
+      }]
+    }
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "version": "0",
+  "id": "8f6b4c07-aaaa-bbbb-cccc-1234567890ab",
+  "detail-type": "Anomaly Detected",
+  "source": "my.test.source",
+  "account": "123456789012",
+  "time": "2025-09-28T00:15:00Z",
+  "region": "us-east-1",
+  "resources": [],
+  "detail": {
+    "anomalyId": "anomaly-1234567890abcdef",
+    "anomalyStartDate": "2025-09-27T00:00:00Z",
+    "anomalyEndDate": "2025-09-27T23:59:59Z",
+    "anomalyScore": {
+      "currentScore": 8.7
+    },
+    "impact": {
+      "maxImpact": 15.23,
+      "unit": "USD"
+    },
+    "rootCauses": [
+      {
+        "service": "AmazonEC2",
+        "region": "ap-northeast-2",
+        "linkedAccount": "123456789012",
+        "usageType": "BoxUsage:t3.medium"
+      }
+    ]
+  }
+}

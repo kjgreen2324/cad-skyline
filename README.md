@@ -33,7 +33,7 @@ AWS의 비용 관리(FinOps) 기능과 여러 서비스를 조합하여,
 
 아래 아키텍처는 **비용 이상 탐지 → Slack 알림/승인 → 자동 완화**까지의 전체 흐름을 보여줍니다.
 
-![architecture](./f74027e4-bf19-4f04-8079-98f585830329.png)
+![architecture](./images/architecture.png)
 
 ---
 
@@ -93,7 +93,7 @@ AWS의 비용 관리(FinOps) 기능과 여러 서비스를 조합하여,
 * Slack 메시지 업데이트로 운영자가 결과 즉시 확인 가능  
 * FinOps 환경에서 **비용 이상 탐지 + 대응 자동화 PoC**로 활용 가능  
 
-![slack-result](./slack-result.png)
+![slack-result](./images/slack-result.png)
 
 ---
 

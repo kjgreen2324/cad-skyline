@@ -1,0 +1,28 @@
+{
+  "RoleName": "slack-interaction-handler-role-pkj",
+  "AssumeRolePolicyDocument": {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Principal": { "Service": "lambda.amazonaws.com" },
+        "Action": "sts:AssumeRole"
+      }
+    ]
+  },
+  "AttachedManagedPolicies": [
+    "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+  ],
+  "InlinePolicies": {
+    "InvokeWorkerLambdaPolicy-pkj": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "lambda:InvokeFunction",
+          "Resource": "arn:aws:lambda:<region>:<account-id>:function:cost-anomaly-worker-pkj"
+        }
+      ]
+    }
+  }
+}
